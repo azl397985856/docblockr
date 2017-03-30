@@ -11,13 +11,16 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello"
+        "onCommand:doc.docblockr"
     ],
     "main": "./out/src/extension",
     "contributes": {
         "commands": [{
-            "command": "extension.sayHello",
-            "title": "Hello World"
+            "command": "doc.docblockr",
+            "title": "docblockr"
+        },{
+            "command": "doc.traceTypeScriptSyntaxNode",
+            "title": "traceTypeScriptSyntaxNode"
         }]
     },
     "scripts": {

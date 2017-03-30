@@ -1,29 +1,94 @@
-'use strict';
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vs from "vscode";
+import * as path from "path";
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+import { DocBlockr } from "./docblockr";
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "docblockr" is now active!');
+let docblockr: DocBlockr;
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
-        // The code you place here will be executed every time your command is executed
-
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
-    });
-
-    context.subscriptions.push(disposable);
+function lazyInitializeDocumenter() {
+    if (!docblockr) {
+        docblockr = new DocBlockr();
+    }
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() {
+function languageIsSupported(document: vs.TextDocument) {
+    return (document.languageId === "javascript" ||
+        document.languageId === "typescript" ||
+        document.languageId === "vue" ||
+        document.languageId === "javascriptreact" ||
+        document.languageId === "typescriptreact" ||
+        path.extname(document.fileName) === ".vue");
+}
+
+function verifyLanguageSupport(document: vs.TextDocument, commandName: string) {
+    if (!languageIsSupported(document)) {
+        vs.window.showWarningMessage(`Sorry! '${commandName}' currently supports JavaScript and TypeScript only.`);
+        return false;
+    }
+
+    return true;
+}
+
+function runCommand(commandName: string, document: vs.TextDocument, implFunc: () => void) {
+    if (!verifyLanguageSupport(document, commandName)) {
+        return;
+    }
+
+    try {
+        lazyInitializeDocumenter();
+        implFunc();
+    }
+    catch (e) {
+        debugger;
+        console.error(e);
+    }
+}
+
+export function activate(context: vs.ExtensionContext): void {
+    context.subscriptions.push(vs.workspace.onDidChangeTextDocument(e => {
+        if (!vs.workspace.getConfiguration().get("doc.automaticForBlockComments", true)) {
+            return;
+        }
+
+        if (!languageIsSupported(e.document)) {
+            return;
+        }
+
+        const editor = vs.window.activeTextEditor;
+        if (editor.document !== e.document) {
+            return;
+        }
+
+        if (e.contentChanges.length > 1) {
+            return;
+        }
+
+        const change = e.contentChanges[0];
+        if (change.text === "* */") {
+            lazyInitializeDocumenter();
+            setTimeout(() => {
+                try {
+                    docblockr.automaticDocument(editor);
+                }
+                catch (ex) {
+                    console.error("docblockr: Failed to document at current position.");
+                }
+            }, 0);
+        }
+    }));
+
+    context.subscriptions.push(vs.commands.registerCommand("doc.docblockr", () => {
+        const commandName = "docblockr";
+        runCommand(commandName, vs.window.activeTextEditor.document, () => {
+            docblockr.documentThis(vs.window.activeTextEditor, commandName);
+        });
+    }));
+
+    context.subscriptions.push(vs.commands.registerCommand("doc.traceTypeScriptSyntaxNode", () => {
+        const commandName = "Trace TypeScript Syntax Node";
+
+        runCommand(commandName, vs.window.activeTextEditor.document, () => {
+            docblockr.traceNode(vs.window.activeTextEditor);
+        });
+    }));
 }
