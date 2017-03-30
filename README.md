@@ -1,6 +1,6 @@
-# docblockr README
+# Docblockr
 
-This is the README for your extension "docblockr". After writing up a brief description, we recommend including the following sections.
+a vscode plugin for documenting your code.
 
 ## Features
 
@@ -11,10 +11,6 @@ For example if there is an image subfolder under your extension project workspac
 \!\[feature X\]\(images/feature-x.png\)
 
 > Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
 
 ## Extension Settings
 
@@ -30,6 +26,7 @@ This extension contributes the following settings:
 ## TODO
 
 1.more user configure
+
 2.format optimization
 
 **Enjoy!**
